@@ -1,0 +1,41 @@
+version: "3"
+services:
+    # バックエンド
+    server:
+        container_name: dockerlec_server
+        build: ./server   #Dockerfileのパスを指定
+        env_file:
+            - ./.env
+        tty: true 
+        stdin_open: true
+        volumes:
+            - type: bind
+              source: ./server
+              target: /server
+        ports:
+            - ${HOST_SERVER_PORTS}:80 #左にホスト側のポート番号，左にコンテナ側のポート番号
+        depends_on:
+            - database #databaseのコンテナが先に起動される
+
+    # データベース
+    database:
+        image: mysql:8.0
+        container_name: mysql_practice
+        env_file:
+            - ./.env
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${MYSQL_DATABASE}
+            MYSQL_USER: ${MYSQL_USER}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+            TZ: 'Asia/Tokyo'
+        command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci #コンテナ起動時にコマンドを実行（CMDと同意）
+        tty: true
+        stdin_open: true
+        volumes:
+            - ./database/data:/var/lib/mysql
+            - ./database/my.cnf:/etc/mysql/conf.d/my.cnf
+            - ./database/sqls:/docker-entrypoint-initdb.d
+        ports:
+            - ${HOST_DATABASE_PORTS}:3306
+    
